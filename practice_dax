@@ -1,0 +1,90 @@
+Practice 1
+-------------------------------
+
+1. Find team with most tournaments won
+2. Display Host countries name that tournaments won
+3. Longest gap in years between tournaments
+4. Find countries with the highest number of hosted tournaments
+5. Find countries with the most second place finishes
+6. Find countries with most tournaments appearance
+
+
+Host countries won Tournaments = CONCATENATEX(FILTER(tournaments,tournaments[winner] = tournaments[host_country]),[winner]," | ",[winner])
+
+
+Longest gap in years = 
+VAR source_table = SELECTCOLUMNS(tournaments,"current year",tournaments[year],"prev year",CALCULATE(MAX(tournaments[year]),FILTER(tournaments,tournaments[year] < EARLIER(tournaments[year]))))
+VAR source_table2 = SELECTCOLUMNS(source_table,"currennt_year",[current year],"prev_year",[prev year],"gaps_in_year",if(NOT ISBLANK([prev year]),[current year] - [prev year],BLANK()))
+RETURN MAXX(source_table2,[gaps_in_year])
+
+team with the most tournaments host = 
+VAR source_table = SUMMARIZE(tournaments,tournaments[host_country],"Total hosts",CALCULATE(COUNT(tournaments[host_country])))
+VAR max_host = MAXX(source_table,[Total hosts])
+VAR _rezult = CONCATENATEX(FILTER(source_table,[Total hosts]= max_host),[host_country]," | ",[host_country])
+Return _rezult
+
+team with the most tournaments won = 
+VAR source_table = SUMMARIZE(tournaments,tournaments[winner],"Total wons",CALCULATE(COUNT(tournaments[winner])))
+VAR max_wons = MAXX(source_table,[Total wons])
+VAR _rezult = CONCATENATEX(FILTER(source_table,[Total wons] = max_wons),[winner]," | ",[winner])
+Return _rezult
+Practice 2
+-------------------------------
+
+1. Countries with most finishes in the top 2
+2. Longest gap in years between titles
+3. Countries with most consecutive champions
+4. Countries with most finals played but never lost
+5. Male football players with the most tournaments played
+
+
+The longest champion years = max(tournaments[diff champions years]) 
+The longest champion years 2 = 
+ VAR source_table = 
+    ADDCOLUMNS(
+        tournaments,
+        "last champ year",
+        CALCULATE(
+            max(tournaments[year]),
+            FILTER(
+                tournaments,
+                tournaments[winner]= EARLIER(tournaments[winner]) 
+                && tournaments[year] < EARLIER(tournaments[year])
+                    )
+            )
+        )
+ VAR source_table2 = 
+        ADDCOLUMNS(
+            source_table,"Diff champ years",
+            IF( 
+                NOT ISBLANK([last champ year]),
+                [year]-[last champ year],
+                BLANK()
+                )
+            )
+ Return MAXX(source_table2,[Diff champ years])
+
+ 
+The most finalist never lost = 
+VAR Source_table1 = EXCEPT(SELECTCOLUMNS(FILTER(tournament_standings,tournament_standings[position] in {1,2}),"finalist",tournament_standings[team_name]),SELECTCOLUMNS(FILTER(tournament_standings,tournament_standings[position] in {2}),"finalist",tournament_standings[team_name]))
+
+VAR Source_table2 = SUMMARIZE(
+    Source_table1,
+    [finalist],
+    "Count", COUNTROWS(FILTER(Source_table1,[finalist] = EARLIER([finalist])))
+)
+
+VAR max_wons = maxx(Source_table2,[Count])
+RETURN CONCATENATEX(FILTER(Source_table2,[Count]=max_wons),[finalist]," | ",[finalist])
+
+
+Countries with most consecutive champions = 
+VAR source_table = SUMMARIZE(
+    FILTER(tournaments, tournaments[Diff Champions Years] = 4), 
+    [winner],  "Total", CALCULATE(COUNT(tournaments[winner]))
+    )
+VAR max_table = MAXX(source_table, [Total])
+RETURN 
+CONCATENATEX(source_table, [winner], " | ", [winner])
+
+
