@@ -433,3 +433,22 @@ dax
 Copy
 Edit
 TOPN(1, ..., [Tournaments], DESC)
+
+---------------------------------------------------------------------------------------------------
+Date = 
+VAR max_year = YEAR(MAX('Chocolate Sales'[Date]))
+VAR min_year = YEAR(MIN('Chocolate Sales'[Date]))
+Return 
+        ADDCOLUMNS(
+                FILTER(
+                        CALENDARAUTO(),
+                        AND(YEAR([Date]) >=min_year,YEAR([Date]) <=max_year)),
+                        "Year",YEAR([Date]),
+                        "Month Number",MONTH([Date]),
+                        "Month Name", FORMAT([Date],"MMMM"),
+                        "Quarter",QUARTER([Date]),
+                        "Day",DAY([Date]),
+                        "Weekday",WEEKDAY([Date]),
+                        "Weekday Name",FORMAT([Date],"dddd"),
+                        "QQ-YYYY","Q" & FORMAT([Date],"Q-YYYY")
+                        )
