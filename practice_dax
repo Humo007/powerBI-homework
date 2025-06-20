@@ -87,4 +87,349 @@ VAR max_table = MAXX(source_table, [Total])
 RETURN 
 CONCATENATEX(source_table, [winner], " | ", [winner])
 
+DAX Full Notes
+🔹 1. What is DAX?
+DAX stands for Data Analysis Expressions.
 
+It is a formula language used in Power BI, Power Pivot, and SSAS Tabular models.
+
+Designed to perform data analysis and calculations on data models.
+
+🔹 2. DAX Syntax Basics
+DAX formulas always start with an equals sign =.
+
+Use functions, columns, tables, constants, and operators.
+
+dax
+Copy
+Edit
+= SUM(Sales[Total])
+🔹 3. Data Types in DAX
+Numeric: Integer, Decimal
+
+Boolean: TRUE/FALSE
+
+Text: Strings
+
+Date/Time
+
+Currency
+
+Blank
+
+🔹 4. Calculated Columns vs Measures
+Feature	Calculated Column	Measure
+Row-by-row context	Yes	No
+Stored in model	Yes (consumes memory)	No (calculated on the fly)
+Use Case	Used for filtering/sorting	Used for aggregations in visuals
+
+🔹 5. Common DAX Functions
+🔸 Aggregation Functions
+SUM(), AVERAGE(), MAX(), MIN(), COUNT(), DISTINCTCOUNT()
+
+dax
+Copy
+Edit
+Total Sales = SUM(Sales[Amount])
+🔸 Logical Functions
+IF(), SWITCH(), AND(), OR(), NOT()
+
+dax
+Copy
+Edit
+Is High Sale = IF(Sales[Amount] > 1000, "Yes", "No")
+🔸 Text Functions
+CONCATENATE(), LEFT(), RIGHT(), MID(), UPPER(), LOWER(), LEN()
+
+dax
+Copy
+Edit
+Full Name = CONCATENATE(Customer[FirstName], " " & Customer[LastName])
+🔸 Date & Time Functions
+TODAY(), NOW(), YEAR(), MONTH(), DAY(), DATEDIFF(), DATEADD(), EDATE()
+
+dax
+Copy
+Edit
+Order Age = DATEDIFF(Orders[OrderDate], TODAY(), DAY)
+🔸 Filter Functions
+FILTER(), ALL(), ALLEXCEPT(), VALUES(), REMOVEFILTERS()
+
+dax
+Copy
+Edit
+Filtered Sales = CALCULATE(SUM(Sales[Amount]), FILTER(Sales, Sales[Region] = "West"))
+🔸 Time Intelligence
+TOTALYTD(), DATESYTD(), SAMEPERIODLASTYEAR(), PARALLELPERIOD(), DATEADD()
+
+dax
+Copy
+Edit
+YTD Sales = TOTALYTD(SUM(Sales[Amount]), Calendar[Date])
+🔹 6. CALCULATE() Function
+Most powerful function in DAX
+
+Changes the filter context
+
+dax
+Copy
+Edit
+West Sales = CALCULATE(SUM(Sales[Amount]), Sales[Region] = "West")
+🔹 7. Context in DAX
+🔸 Row Context
+Automatically available in calculated columns
+
+Evaluates expressions row by row
+
+🔸 Filter Context
+Comes from reports, slicers, or CALCULATE()
+
+🔹 8. Variables in DAX
+Used to simplify complex formulas
+
+dax
+Copy
+Edit
+Sales Difference = 
+VAR CurrentSales = SUM(Sales[Amount])
+VAR LastYearSales = CALCULATE(SUM(Sales[Amount]), SAMEPERIODLASTYEAR(Calendar[Date]))
+RETURN
+CurrentSales - LastYearSales
+🔹 9. Iterator Functions
+SUMX(), AVERAGEX(), COUNTX(), MAXX(), MINX() etc.
+
+Iterate through a table and return a single value.
+
+dax
+Copy
+Edit
+Total Profit = SUMX(Sales, Sales[Price] - Sales[Cost])
+🔹 10. Advanced DAX
+RANKX() – ranking
+
+CROSSFILTER() – change cross filtering
+
+RELATED() / RELATEDTABLE() – work across relationships
+
+USERELATIONSHIP() – activate inactive relationship
+
+dax
+Copy
+Edit
+Rank = RANKX(ALL(Customer), [Total Sales])
+ Tips for Learning DAX
+Understand the data model – relationships matter.
+
+Start with simple measures, then move to advanced.
+
+Practice CALCULATE() and FILTER() – key to mastering DAX.
+
+Use DAX Studio or Power BI Performance Analyzer to test formulas.
+
+Think in terms of row and filter context.
+
+ Real-World Use Cases
+Scenario	DAX Use
+Sales Growth	([This Year Sales] - [Last Year Sales]) / [Last Year Sales]
+Customer Retention	Count customers in multiple periods
+Dynamic Titles	Use SELECTEDVALUE()
+Top N Customers	Use RANKX() and filters
+
+Would you like these notes as a PDF or printable file? Or do you want separate lessons for practice (Beginner → Advanced)?
+
+
+
+
+
+
+
+
+You said:
+1. Find team with most tournaments won
+2. Display Host countries name that tournaments won
+3. Longest gap in years between tournaments
+4. Find countries with the highest number of hosted tournaments
+5. Find countries with the most second place finishes
+6. Find countries with most tournaments appearance
+Practice 2
+-------------------------------
+
+1. Countries with most finishes in the top 2
+2. Longest gap in years between titles
+3. Countries with most consecutive champions
+4. Countries with most finals played but never lost
+5. Male football players with the most tournaments played
+
+
+ChatGPT said:
+Here are DAX practice solutions for your two sets of questions related to tournament and football data. The table names used are tournaments, tournament_standings, and players. Modify as per your actual data model if the names differ.
+
+🔹 Practice 1
+1. Find team with most tournaments won
+dax
+Copy
+Edit
+Most Titles = 
+TOPN(
+    1,
+    SUMMARIZE(
+        FILTER(tournament_standings, tournament_standings[position] = 1),
+        tournament_standings[team_name],
+        "Titles", COUNTROWS(tournament_standings)
+    ),
+    [Titles], DESC
+)
+2.  Display Host countries that won the tournament
+dax
+Copy
+Edit
+Host Winners = 
+FILTER(
+    tournaments,
+    tournaments[host_country] = tournaments[champion]
+)
+Or, a summarized version:
+
+dax
+Copy
+Edit
+Host Country Wins = 
+SUMMARIZE(
+    FILTER(tournaments, tournaments[host_country] = tournaments[champion]),
+    tournaments[host_country],
+    "Wins as Host", COUNTROWS(tournaments)
+)
+3.  Longest gap in years between tournaments
+dax
+Copy
+Edit
+Longest Gap = 
+MAXX(
+    ADDCOLUMNS(
+        SELECTCOLUMNS(
+            tournaments, "Year", tournaments[year]
+        ),
+        "Previous Year", 
+        CALCULATE(MAX(tournaments[year]), FILTER(tournaments, tournaments[year] < EARLIER(tournaments[year])))
+    ),
+    [Year] - [Previous Year]
+)
+4. Find countries with the most hosted tournaments
+dax
+Copy
+Edit
+Most Hosted = 
+TOPN(
+    1,
+    SUMMARIZE(
+        tournaments,
+        tournaments[host_country],
+        "Host Count", COUNTROWS(tournaments)
+    ),
+    [Host Count], DESC
+)
+5. Find countries with most 2nd place finishes
+dax
+Copy
+Edit
+Most Runners-Up = 
+TOPN(
+    1,
+    SUMMARIZE(
+        FILTER(tournament_standings, tournament_standings[position] = 2),
+        tournament_standings[team_name],
+        "RunnersUp", COUNTROWS(tournament_standings)
+    ),
+    [RunnersUp], DESC
+)
+6. Find countries with most tournament appearances
+dax
+Copy
+Edit
+Most Appearances = 
+TOPN(
+    1,
+    SUMMARIZE(
+        tournament_standings,
+        tournament_standings[team_name],
+        "Appearances", DISTINCTCOUNT(tournament_standings[year])
+    ),
+    [Appearances], DESC
+)
+🔹 Practice 2
+1. Countries with most finishes in top 2
+dax
+Copy
+Edit
+Top 2 Finishes = 
+SUMMARIZE(
+    FILTER(tournament_standings, tournament_standings[position] IN {1, 2}),
+    tournament_standings[team_name],
+    "Top2Count", COUNTROWS(tournament_standings)
+)
+2. Longest gap between titles for any country
+dax
+Copy
+Edit
+Title Gaps = 
+MAXX(
+    ADDCOLUMNS(
+        SUMMARIZE(
+            FILTER(tournament_standings, tournament_standings[position] = 1),
+            tournament_standings[team_name],
+            "Years", CONCATENATEX(VALUES(tournament_standings[year]), tournament_standings[year], ", ")
+        ),
+        "Gap", 
+        VAR Team = [team_name]
+        VAR Years = 
+            CALCULATETABLE(
+                VALUES(tournament_standings[year]),
+                tournament_standings[team_name] = Team && tournament_standings[position] = 1
+            )
+        RETURN
+            MAXX(Years, [year]) - MINX(Years, [year])
+    ),
+    [Gap]
+)
+3. Countries with most consecutive championships
+This one needs more advanced logic using RANKX() or iteration over sorted years. Here’s a simplified version:
+
+dax
+Copy
+Edit
+Consecutive Wins = 
+// Requires calculated column or Power Query step to compare previous winner
+// Usually handled better in Power Query with Index
+Ask if you'd like a calculated column-based method.
+
+4. Countries with most finals played but never lost
+dax
+Copy
+Edit
+FinalistsNeverLost = 
+EXCEPT(
+    SELECTCOLUMNS(
+        FILTER(tournament_standings, tournament_standings[position] IN {1, 2}),
+        "Finalist", tournament_standings[team_name]
+    ),
+    SELECTCOLUMNS(
+        FILTER(tournament_standings, tournament_standings[position] = 2),
+        "Finalist", tournament_standings[team_name]
+    )
+)
+5.  Male players with most tournaments played
+dax
+Copy
+Edit
+Most Tournaments Played = 
+SUMMARIZE(
+    FILTER(players, players[gender] = "Male"),
+    players[player_name],
+    "Tournaments", DISTINCTCOUNT(players[tournament_year])
+)
+You can then use TOPN() if you want only the top player(s):
+
+dax
+Copy
+Edit
+TOPN(1, ..., [Tournaments], DESC)
